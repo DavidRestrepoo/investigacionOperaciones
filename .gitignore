@@ -7,8 +7,6 @@ env/
 venv/
 .env
 
-# Database
-chroma_db/
 
 # OS
 .DS_Store
