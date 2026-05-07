@@ -327,7 +327,8 @@ with tab2:
         with (col1 if idx % 2 == 0 else col2):
             if st.button(f"📌 {titulo}", use_container_width=True):
                 st.session_state.problema_input = contenido
-                st.switch_tab("💬 Chat")
+                st.success("✅ Ejemplo cargado. Ve a la pestaña '💬 Chat' y pulsa '🚀 Resolver'.")
+                st.rerun()
 
 # ============================================================================
 # TAB 3: DIAGNÓSTICO

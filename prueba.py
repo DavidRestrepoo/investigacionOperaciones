@@ -71,9 +71,19 @@ load_dotenv()
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
+# Fallback para Streamlit Community Cloud (Secrets en TOML).
+if not GROQ_API_KEY:
+    try:
+        import streamlit as st
+
+        GROQ_API_KEY = st.secrets.get("GROQ_API_KEY", GROQ_API_KEY)
+        GROQ_MODEL = st.secrets.get("GROQ_MODEL", GROQ_MODEL)
+    except Exception:
+        pass
+
 
 if not GROQ_API_KEY:
-    raise ValueError("❌ GROQ_API_KEY no configurada. Define la variable en .env")
+    logger.warning("⚠️ GROQ_API_KEY no configurada. El sistema iniciará en modo sin LLM hasta que definas la clave.")
 
 logger.info(f"✅ Usando modelo: {GROQ_MODEL}")
 if not LANGCHAIN_AVAILABLE:
