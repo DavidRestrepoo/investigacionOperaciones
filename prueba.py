@@ -606,6 +606,88 @@ def _resolver_desde_banco_ejercicios(pregunta_usuario: str) -> Optional[str]:
     return "\n".join(partes)
 
 
+def _parse_coeficiente_termino(valor: str) -> float:
+    """Convierte coeficientes tipo '', '+', '-', '2', '+3.5' a float."""
+    token = valor.replace(" ", "")
+    if token in ("", "+"):
+        return 1.0
+    if token == "-":
+        return -1.0
+    return float(token)
+
+
+def _extraer_coeficiente(lhs: str, variable: str) -> float:
+    """Extrae el coeficiente total de una variable en una expresión lineal."""
+    patron = re.compile(rf"([+-]?\s*\d*\.?\d*)\s*\*?\s*{variable}\b", re.IGNORECASE)
+    total = 0.0
+    for match in patron.finditer(lhs):
+        total += _parse_coeficiente_termino(match.group(1))
+    return total
+
+
+def _resolver_lp_bivariado_desde_texto(pregunta_usuario: str) -> Optional[str]:
+    """Resuelve automáticamente PL de 2 variables (A,B) si el texto tiene formato reconocible."""
+    texto = pregunta_usuario.lower().replace("≤", "<=").replace("≥", ">=")
+    if "gananc" not in texto or "a" not in texto or "b" not in texto:
+        return None
+
+    ganancias = re.search(
+        r"ganancias?\s*:\s*.*?a\s*=\s*\$?\s*([0-9]+(?:\.[0-9]+)?)\s*/?\s*unidad\s*,\s*b\s*=\s*\$?\s*([0-9]+(?:\.[0-9]+)?)",
+        texto,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if not ganancias:
+        return None
+
+    c_a = float(ganancias.group(1))
+    c_b = float(ganancias.group(2))
+
+    restricciones = re.findall(r"([^,;\n]+?)<=\s*([0-9]+(?:\.[0-9]+)?)", texto, flags=re.IGNORECASE)
+    A_ub: List[List[float]] = []
+    b_ub: List[float] = []
+
+    for lhs, rhs in restricciones:
+        # Evita contaminar coeficientes con texto narrativo anterior a la expresión.
+        lhs = re.split(r"[:.]", lhs)[-1].strip()
+        if "a" not in lhs and "b" not in lhs:
+            continue
+        coef_a = _extraer_coeficiente(lhs, "a")
+        coef_b = _extraer_coeficiente(lhs, "b")
+        if abs(coef_a) < 1e-12 and abs(coef_b) < 1e-12:
+            continue
+        A_ub.append([coef_a, coef_b])
+        b_ub.append(float(rhs))
+
+    if not A_ub:
+        return None
+
+    bounds = [(0, None), (0, None)] if re.search(r"a\s*,\s*b\s*>=\s*0|a\s*>=\s*0|b\s*>=\s*0", texto) else [(None, None), (None, None)]
+
+    try:
+        result = linprog(
+            c=np.array([-c_a, -c_b], dtype=float),
+            A_ub=np.array(A_ub, dtype=float),
+            b_ub=np.array(b_ub, dtype=float),
+            bounds=bounds,
+            method="highs",
+        )
+
+        if not result.success:
+            return f"❌ Sin solución óptima: {result.message}"
+
+        x_a = float(result.x[0])
+        x_b = float(result.x[1])
+        z_max = c_a * x_a + c_b * x_b
+
+        return (
+            "✅ ÓPTIMO ENCONTRADO (PL CONTINUA)\n"
+            f"Producción óptima:\n- A = {x_a:.4f}\n- B = {x_b:.4f}\n"
+            f"Ganancia máxima: ${z_max:.4f}"
+        )
+    except Exception:
+        return None
+
+
 def _parsear_json_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     """Extrae un objeto JSON desde texto libre (con o sin bloque markdown)."""
     try:
@@ -784,6 +866,11 @@ def resolver_problema_io(pregunta_usuario: str) -> str:
     respuesta_banco = _resolver_desde_banco_ejercicios(pregunta_usuario)
     if respuesta_banco:
         return respuesta_banco
+
+    respuesta_lp_directa = _resolver_lp_bivariado_desde_texto(pregunta_usuario)
+    if respuesta_lp_directa:
+        sugerencia = generar_sugerencia_solucion(pregunta_usuario, respuesta_lp_directa)
+        return f"{respuesta_lp_directa}\n\n💡 SUGERENCIA DE SOLUCIÓN\n{sugerencia}"
 
     if not GROQ_API_KEY:
         return "❌ API Key de Groq no configurada"
