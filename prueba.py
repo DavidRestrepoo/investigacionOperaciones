@@ -449,6 +449,163 @@ tools = [
 ]
 
 
+BANCO_EJERCICIOS_PATH = Path("./Problemas-IO-Tipo2.extraido.txt")
+_BANCO_EJERCICIOS_CACHE: Optional[List[Dict[str, str]]] = None
+
+
+def _cargar_banco_ejercicios() -> List[Dict[str, str]]:
+    """Carga y parsea ejercicios estructurados del archivo de apoyo local."""
+    global _BANCO_EJERCICIOS_CACHE
+
+    if _BANCO_EJERCICIOS_CACHE is not None:
+        return _BANCO_EJERCICIOS_CACHE
+
+    if not BANCO_EJERCICIOS_PATH.exists():
+        _BANCO_EJERCICIOS_CACHE = []
+        return _BANCO_EJERCICIOS_CACHE
+
+    try:
+        texto = BANCO_EJERCICIOS_PATH.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        _BANCO_EJERCICIOS_CACHE = []
+        return _BANCO_EJERCICIOS_CACHE
+
+    ejercicios: List[Dict[str, str]] = []
+    seccion_actual = ""
+    actual: Optional[Dict[str, str]] = None
+    en_respuesta = False
+
+    for raw_line in texto.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if actual and en_respuesta:
+                actual["respuesta"] += "\n"
+            continue
+
+        sec_match = re.match(r"^(\d+)\.\s+(.+)$", line)
+        if sec_match and not line.lower().startswith("ejercicio"):
+            seccion_actual = line
+            continue
+
+        ej_match = re.match(r"^Ejercicio\s+(\d+\.\d+)\s*:\s*(.+)$", line, flags=re.IGNORECASE)
+        if ej_match:
+            if actual:
+                actual["enunciado"] = actual["enunciado"].strip()
+                actual["respuesta"] = actual["respuesta"].strip()
+                ejercicios.append(actual)
+
+            actual = {
+                "indice": ej_match.group(1),
+                "titulo": ej_match.group(2).strip(),
+                "seccion": seccion_actual,
+                "enunciado": "",
+                "respuesta": "",
+            }
+            en_respuesta = False
+            continue
+
+        if not actual:
+            continue
+
+        if line.lower().startswith("enunciado:"):
+            actual["enunciado"] += line.split(":", 1)[1].strip() + "\n"
+            en_respuesta = False
+            continue
+
+        if line.lower().startswith("respuesta:"):
+            en_respuesta = True
+            contenido = line.split(":", 1)[1].strip()
+            if contenido:
+                actual["respuesta"] += contenido + "\n"
+            continue
+
+        if en_respuesta:
+            actual["respuesta"] += line + "\n"
+        else:
+            actual["enunciado"] += line + "\n"
+
+    if actual:
+        actual["enunciado"] = actual["enunciado"].strip()
+        actual["respuesta"] = actual["respuesta"].strip()
+        ejercicios.append(actual)
+
+    _BANCO_EJERCICIOS_CACHE = ejercicios
+    return ejercicios
+
+
+def _normalizar_indice_ejercicio(pregunta_usuario: str) -> Optional[str]:
+    """Detecta referencias como 'primer ejercicio', 'ejercicio 1' o 'ejercicio 1.1'."""
+    texto = pregunta_usuario.lower()
+
+    match_decimal = re.search(r"ejercicio\s*(\d+\.\d+)", texto)
+    if match_decimal:
+        return match_decimal.group(1)
+
+    match_entero = re.search(r"ejercicio\s*(\d+)", texto)
+    if match_entero:
+        return f"{match_entero.group(1)}.1"
+
+    ordinales = {
+        "primer": 1,
+        "primero": 1,
+        "segundo": 2,
+        "tercer": 3,
+        "tercero": 3,
+        "cuarto": 4,
+        "quinto": 5,
+        "sexto": 6,
+        "septimo": 7,
+        "séptimo": 7,
+        "octavo": 8,
+        "noveno": 9,
+        "decimo": 10,
+        "décimo": 10,
+    }
+
+    for palabra, numero in ordinales.items():
+        if f"{palabra} ejercicio" in texto:
+            return f"{numero}.1"
+
+    return None
+
+
+def _resolver_desde_banco_ejercicios(pregunta_usuario: str) -> Optional[str]:
+    """Responde ejercicios específicos desde el banco local para evitar ruido del RAG general."""
+    indice = _normalizar_indice_ejercicio(pregunta_usuario)
+    if not indice:
+        return None
+
+    banco = _cargar_banco_ejercicios()
+    if not banco:
+        return None
+
+    ejercicio = next((e for e in banco if e.get("indice") == indice), None)
+    if not ejercicio:
+        return (
+            f"⚠️ No encontré el ejercicio {indice} en el banco local. "
+            "Intenta pedirlo por índice exacto (ejemplo: 'Ejercicio 2.1')."
+        )
+
+    enunciado = ejercicio.get("enunciado", "").strip()
+    respuesta = ejercicio.get("respuesta", "").strip()
+    seccion = ejercicio.get("seccion", "").strip()
+    titulo = ejercicio.get("titulo", "").strip()
+
+    partes = [f"📘 EJERCICIO {indice}: {titulo}"]
+    if seccion:
+        partes.append(f"Tema: {seccion}")
+    if enunciado:
+        partes.append(f"\nENUNCIADO\n{enunciado}")
+    if respuesta:
+        partes.append(f"\nSOLUCIÓN\n{respuesta}")
+
+    partes.append(
+        "\n💡 SUGERENCIA DE SOLUCIÓN\n"
+        "Si quieres, también te lo resuelvo paso a paso con formulación matemática y verificación numérica."
+    )
+    return "\n".join(partes)
+
+
 def _parsear_json_desde_texto(texto: str) -> Optional[Dict[str, Any]]:
     """Extrae un objeto JSON desde texto libre (con o sin bloque markdown)."""
     try:
@@ -624,6 +781,10 @@ def resolver_problema_io(pregunta_usuario: str) -> str:
     Resuelve problemas de Investigación de Operaciones usando agentes LLM.
     El agente selecciona automáticamente la mejor herramienta.
     """
+    respuesta_banco = _resolver_desde_banco_ejercicios(pregunta_usuario)
+    if respuesta_banco:
+        return respuesta_banco
+
     if not GROQ_API_KEY:
         return "❌ API Key de Groq no configurada"
 
