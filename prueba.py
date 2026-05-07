@@ -663,6 +663,52 @@ def _resolver_lp_bivariado_desde_texto(pregunta_usuario: str) -> Optional[str]:
 
     bounds = [(0, None), (0, None)] if re.search(r"a\s*,\s*b\s*>=\s*0|a\s*>=\s*0|b\s*>=\s*0", texto) else [(None, None), (None, None)]
 
+    def _vertices_factibles() -> List[Tuple[float, float]]:
+        candidatos: List[Tuple[float, float]] = [(0.0, 0.0)]
+
+        # Intersecciones con ejes.
+        for (a1, b1), rhs in zip(A_ub, b_ub):
+            if abs(a1) > 1e-12:
+                candidatos.append((rhs / a1, 0.0))
+            if abs(b1) > 1e-12:
+                candidatos.append((0.0, rhs / b1))
+
+        # Intersecciones entre pares de restricciones.
+        for i in range(len(A_ub)):
+            for j in range(i + 1, len(A_ub)):
+                a1, b1 = A_ub[i]
+                a2, b2 = A_ub[j]
+                det = a1 * b2 - a2 * b1
+                if abs(det) <= 1e-12:
+                    continue
+                x = (b2 * b_ub[i] - b1 * b_ub[j]) / det
+                y = (a1 * b_ub[j] - a2 * b_ub[i]) / det
+                candidatos.append((x, y))
+
+        def _es_factible(punto: Tuple[float, float]) -> bool:
+            x, y = punto
+            if bounds[0][0] is not None and x < bounds[0][0] - 1e-9:
+                return False
+            if bounds[1][0] is not None and y < bounds[1][0] - 1e-9:
+                return False
+            for (a1, b1), rhs in zip(A_ub, b_ub):
+                if a1 * x + b1 * y > rhs + 1e-9:
+                    return False
+            return True
+
+        factibles = []
+        vistos = set()
+        for p in candidatos:
+            if not _es_factible(p):
+                continue
+            clave = (round(p[0], 8), round(p[1], 8))
+            if clave in vistos:
+                continue
+            vistos.add(clave)
+            factibles.append((float(clave[0]), float(clave[1])))
+
+        return sorted(factibles, key=lambda t: (t[0], t[1]))
+
     try:
         result = linprog(
             c=np.array([-c_a, -c_b], dtype=float),
@@ -679,10 +725,20 @@ def _resolver_lp_bivariado_desde_texto(pregunta_usuario: str) -> Optional[str]:
         x_b = float(result.x[1])
         z_max = c_a * x_a + c_b * x_b
 
+        vertices = _vertices_factibles()
+        eval_vertices = []
+        for vx, vy in vertices:
+            z = c_a * vx + c_b * vy
+            eval_vertices.append(f"- (A={vx:.4f}, B={vy:.4f}) -> Z={z:.4f}")
+
+        detalle_vertices = "\n".join(eval_vertices) if eval_vertices else "- No se pudieron identificar vértices factibles"
+
         return (
             "✅ ÓPTIMO ENCONTRADO (PL CONTINUA)\n"
             f"Producción óptima:\n- A = {x_a:.4f}\n- B = {x_b:.4f}\n"
-            f"Ganancia máxima: ${z_max:.4f}"
+            f"Ganancia máxima: ${z_max:.4f}\n"
+            "\nVerificación de vértices factibles:\n"
+            f"{detalle_vertices}"
         )
     except Exception:
         return None
