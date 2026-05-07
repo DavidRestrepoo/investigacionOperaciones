@@ -77,6 +77,24 @@ if "historial" not in st.session_state:
 if "api_ready" not in st.session_state:
     st.session_state.api_ready = bool(GROQ_API_KEY)
 
+if "problema_input" not in st.session_state:
+    st.session_state.problema_input = ""
+
+
+def cargar_ejemplo() -> None:
+    """Carga un ejemplo en el área de texto sin romper el estado de Streamlit."""
+    st.session_state.problema_input = (
+        "Una empresa fabrica dos productos A y B. "
+        "Ganancias: A=$40/unidad, B=$30/unidad. "
+        "Restricciones: 2A + B <= 100, A + 2B <= 80, A,B >= 0. "
+        "Encuentra el plan óptimo de producción."
+    )
+
+
+def limpiar_problema() -> None:
+    """Limpia el input principal de forma segura."""
+    st.session_state.problema_input = ""
+
 
 def separar_respuesta_y_sugerencia(respuesta: str) -> tuple[str, Optional[str]]:
     """Separa la respuesta principal de la sugerencia final, si existe."""
@@ -186,23 +204,9 @@ with tab1:
     with col1:
         resolver_btn = st.button("🚀 Resolver", use_container_width=True, type="primary")
     with col2:
-        ejemplo_btn = st.button("📋 Cargar Ejemplo", use_container_width=True)
+        st.button("📋 Cargar Ejemplo", use_container_width=True, on_click=cargar_ejemplo)
     with col3:
-        limpiar_btn = st.button("🗑️ Limpiar", use_container_width=True)
-    
-    # Acciones
-    if limpiar_btn:
-        st.session_state.problema_input = ""
-        st.rerun()
-
-    if ejemplo_btn:
-        st.session_state.problema_input = (
-            "Una empresa fabrica dos productos A y B. "
-            "Ganancias: A=$40/unidad, B=$30/unidad. "
-            "Restricciones: 2A + B <= 100, A + 2B <= 80, A,B >= 0. "
-            "Encuentra el plan óptimo de producción."
-        )
-        st.rerun()
+        st.button("🗑️ Limpiar", use_container_width=True, on_click=limpiar_problema)
     
     if resolver_btn and problema.strip():
         with st.spinner("🤔 Procesando..."):
