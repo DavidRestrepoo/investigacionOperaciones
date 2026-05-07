@@ -1,0 +1,78 @@
+1. Problema de Ruta Crítica (CPM/PERT)
+Ejercicio 1.1: Lanzamiento de Nueva Línea de Producción
+Enunciado: Una empresa debe completar 5 actividades para activar una celda robótica.
+A: Calibración (4 días).
+B: Programación (A debe terminar; 6 días).
+C: Instalación física (A debe terminar; 2 días).
+D: Pruebas de seguridad (B y C deben terminar; 3 días).
+E: Capacitación (D debe terminar; 2 días).
+Respuesta:
+Ruta Crítica:A — B — D — E.
+Duración Total:4 + 6 + 3 + 2 = 15 días.
+Holgura de C:10 - (4 + 2) = 4 días. C no es crítica.
+Ejercicio 1.2: Auditoría de Calidad
+Enunciado: Actividades: A (Recolección, 3h), B (Análisis, precede A, 5h), C (Informe, precede B, 2h).
+Respuesta:
+Ruta:A — B — C. Es lineal.
+Duración: 10 horas. Todas las actividades tienen holgura cero.
+2. Problema de Flujos (Flujo Máximo)
+Ejercicio 2.1: Red de Oleoductos
+Enunciado: Una red tiene un Nodo Fuente (S) y un Sumidero (T). Capacidades: S — A: 10, S — B: 5, A — B: 2, A — T: 8, B — T: 7. Determinar el flujomáximo.
+Respuesta:
+Enviar 8 unidades por S — A — T. (Capacidad residual S — A=2).
+Enviar 2 unidades por S — A — B — T. (Capacidad S — A se agota).
+Enviar 5 unidades por S — B — T.
+Flujo Máximo:8 + 2 + 5 = 15 unidades.
+Ejercicio 2.2: Capacidad de Datos en Servidores
+Enunciado: Nodo 1 a 2 (50 Mbps), 1 a 3 (30 Mbps), 2 a 4 (40 Mbps), 3 a 4 (40 Mbps).
+Respuesta:
+Flujo: El cuello de botella es la salida de 1 (80 Mbps) o la llegada a 4 (80 Mbps). Como la capacidad interna lo permite:
+Flujo Máximo: 80 Mbps.
+3. Problema de Logística (Transporte)
+Ejercicio 3.1: Distribución de Almacenes
+Enunciado: 2 Plantas (P_1=100, P_2=200 unid.) y 2 Clientes (C_1=150, C_2=150 unid.). Costos: P_1 — C_1=2, P_1 — C_2=4, P_2 — C_1=3, P_2 — C_2=2.
+Respuesta:
+Asignar 100 de P_1 a C_1 (Costo 200).
+Asignar 50 de P_2 a C_1 (Costo 150).
+Asignar 150 de P_2 a C_2 (Costo 300).
+Costo Total:650.
+Ejercicio 3.2: Transbordo de Mercancías
+Enunciado: Enviar 10 unidades de A a C pasando por B. Costo A — B = 5, B — C = 3. Hay una ruta directa A — C = 10.
+Respuesta:
+Ruta óptima: A — B — C. Costo 8 < 10.
+4. Problema de Inventarios (EOQ)
+Ejercicio 4.1: Cantidad Económica de Pedido
+Enunciado: Demanda (D) = 10,000 unid/año. Costo de pedido (S) = 50. Costo de mantenimiento (H) = 2/unid/año.
+Respuesta:
+
+Q^* = sqrt{frac{2DS}{H}} = sqrt{frac{2(10,000)(50)}{2}} = sqrt{500,000} approx 707 text{ unidades.}
+Ejercicio 4.2: Punto de Reorden (ROP)
+Enunciado: Demanda diaria = 50 unid. Tiempo de entrega (Lead Time) = 4 días.
+Respuesta:
+
+ROP = d times L = 50 times 4 = 200 text{ unidades.}
+5. Problema de Colas (M/M/1)
+Ejercicio 5.1: Ventanilla Bancaria
+Enunciado: Tasa de llegada (lambda) = 10 clientes/h. Tasa de servicio (mu) = 12 clientes/h.
+Respuesta:
+Utilización (rho):10/12 = 0.833 (83.3%).
+Clientes en el sistema (L):frac{lambda}{mu - lambda} = frac{10}{12-10} = 5 clientes.
+Ejercicio 5.2: Lavado de Autos
+Enunciado:lambda = 3 autos/h, mu = 5 autos/h. ¿Tiempo medio en el sistema (W)?
+Respuesta:
+
+W = frac{1}{mu - lambda} = frac{1}{5-3} = 0.5 text{ horas (30 minutos).}
+6. Problema de No Linealidad (NLP)
+Ejercicio 6.1: Optimización de Ingresos
+Enunciado: Precio P = 100 - 0.01Q. Costo total C = 50Q + 10,000. Maximizar beneficio.
+Respuesta:
+Función Beneficio (B):B = (100 - 0.01Q)Q - (50Q + 10,000) = -0.01Q^2 + 50Q - 10,000.
+Derivada:B' = -0.02Q + 50 = 0 — Q = 2,500.
+Beneficio Máximo:52,500.
+Ejercicio 6.2: Área de Almacén
+Enunciado: Un almacén rectangular debe tener 1000 , m^2. El costo de la pared frontal es 100/m y las otras tres 50/m.
+Respuesta:
+Minimizar C = 100x + 50x + 50y + 50y = 150x + 100y, sujeto a xy=1000 — y=1000/x.
+C(x) = 150x + 100,000/x.
+C'(x) = 150 - 100,000/x^2 = 0 — x = sqrt{100,000/150} approx 25.8 , m.
+Estoy listo para tu primer desafío real. ¿Qué proceso quieres que modelemos hoy?
