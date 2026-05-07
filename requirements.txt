@@ -5,9 +5,9 @@ langchain-groq==0.1.2
 langchain-huggingface==0.0.3
 langgraph==0.0.53
 chromadb==0.4.24
-sentence-transformers==2.2.2
+sentence-transformers==2.6.1
 groq==0.4.2
-pymupdf==1.23.8
+pymupdf==1.26.5
 pypdf==3.17.1
 pulp==2.7.0
 scipy==1.11.4
