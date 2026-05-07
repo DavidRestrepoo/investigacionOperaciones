@@ -15,6 +15,31 @@ Sistema inteligente basado en IA para resolver problemas de **Investigación de 
 
 ## 🚀 Quick Start
 
+## 🌐 Publicar Enlace Desde GitHub (Para Tus Compañeros)
+
+Este proyecto se publica de forma sencilla con **Streamlit Community Cloud** usando tu repositorio de GitHub.
+
+1. Entra a: https://share.streamlit.io
+2. Inicia sesión con GitHub.
+3. Clic en **New app**.
+4. Selecciona:
+   - **Repository**: `DavidRestrepoo/investigacionOperaciones`
+   - **Branch**: `main`
+   - **Main file path**: `app_ui.py`
+5. Ve a **Advanced settings > Secrets** y agrega:
+
+```toml
+GROQ_API_KEY = "tu_api_key_de_groq"
+GROQ_MODEL = "llama-3.1-70b-versatile"
+```
+
+6. Clic en **Deploy**.
+7. Copia el enlace público generado (por ejemplo: `https://tu-app.streamlit.app`) y compártelo.
+
+Notas:
+- El archivo `runtime.txt` fija la versión de Python para el deploy.
+- No subas claves reales al repositorio. Usa Secrets del panel de Streamlit.
+
 ### 1. Instalación
 
 ```bash
