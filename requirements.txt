@@ -7,7 +7,6 @@ langgraph==0.0.53
 chromadb==0.4.24
 sentence-transformers==2.6.1
 groq==0.4.2
-pymupdf==1.26.5
 pypdf==3.17.1
 pulp==2.7.0
 scipy==1.11.4
