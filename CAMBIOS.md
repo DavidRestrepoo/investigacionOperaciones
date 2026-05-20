@@ -2,6 +2,18 @@
 
 ## ✅ CAMBIOS COMPLETADOS
 
+### 0. **Integración Segura de `40-preguntas-etapa-2-IO` (Mayo 2026)** ✨
+- ✅ `prueba.py` ahora busca el banco en este orden:
+  - `40-preguntas-etapa-2-IO.txt`
+  - `40-preguntas-etapa-2-IO.md`
+  - `documentos/40-preguntas-etapa-2-IO.txt`
+  - `documentos/40-preguntas-etapa-2-IO.md`
+  - `banco_preguntas_io.txt` (fallback)
+- ✅ Integración **idempotente**: evita duplicar preguntas en ChromaDB en cada reinicio.
+- ✅ Conserva contenido completo de cada pregunta: enunciado, opciones, respuesta correcta y explicación.
+- ✅ Registra manifest de control en `chroma_db/banco_preguntas_manifest.json` para detectar cambios reales.
+- ✅ Si el archivo fuente tiene menos de 40 preguntas, emite advertencia sin romper la app.
+
 ### 1. **Actualización de Configuración** (`.env`)
 - ✅ Eliminadas APIs de Google (Gemini)
 - ✅ Actualizada API key de Groq a: `GROQ_API_KEY_AQUI`
@@ -46,6 +58,47 @@ Herramienta de diagnóstico e reparación:
 - ✅ Verifica herramientas matemáticas
 - ✅ Regenera ChromaDB si es necesario
 - ✅ Modo diagnóstico completo
+
+### 6. **Integración del Banco de Preguntas (40-preguntas-etapa-2-IO)** ✨ NUEVO
+
+#### Cambios implementados:
+
+1. **Nuevo archivo: `banco_preguntas_io.txt`**
+   - Contiene 40 preguntas con respuestas estructuradas y explicadas
+   - Cubre 6 secciones: Ruta Crítica, Flujos en Redes, Logística, Inventarios, Teoría de Colas, PNL
+   - Cada pregunta incluye:
+     - Opciones múltiples (A, B, C, D)
+     - Respuesta correcta claramente identificada
+     - Explicación detallada paso a paso
+     - Interpretación económica/práctica
+     - Ejemplos numéricos cuando aplica
+
+2. **Función nueva en `prueba.py`: `agregar_banco_preguntas_a_chroma()`**
+   - Carga automáticamente el banco de preguntas en ChromaDB
+   - Se ejecuta al inicializar el sistema
+   - Integra 40 preguntas como documentos vectoriales
+   - Mejora la búsqueda RAG con ejemplos concretos
+
+3. **Prompt del agente mejorado**
+   - Nuevas instrucciones de estilo: **FORMATO EDUCATIVO DETALLADO**
+   - El agente ahora responde siguiendo el patrón del banco:
+     1. **CLASIFICACIÓN** del problema
+     2. **OPCIONES** (si es múltiple)
+     3. **RESPUESTA CORRECTA**
+     4. **EXPLICACIÓN DETALLADA** (paso a paso)
+     5. **CONCLUSIÓN** educativa
+   
+   - Secciones de instrucciones añadidas:
+     - "ESTILO DE RESPUESTA - DEBES SEGUIR ESTE FORMATO"
+     - "FORMATO DE CÁLCULO MATEMÁTICO"
+     - "EJEMPLOS NUMÉRICOS"
+
+#### Impacto:
+- ✅ El sistema ahora ofrece **respuestas educativas y completas**
+- ✅ Las respuestas siguen un **formato estructurado y consistente**
+- ✅ Mejor **contextualización** de problemas similares al banco
+- ✅ Estudiantes obtienen **explicaciones paso a paso**
+- ✅ ChromaDB enriquecido con **40 ejemplos de mejor práctica**
 
 ### 5. **Documentación Completa** ✨
 - ✅ **README.md** - Documentación técnica completa

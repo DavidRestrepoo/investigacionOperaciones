@@ -6,6 +6,7 @@
 import os
 import sys
 import json
+import hashlib
 import logging
 import re
 from pathlib import Path
@@ -98,6 +99,14 @@ elif not RAG_AVAILABLE:
 CHROMA_PATH = Path("./chroma_db")
 embeddings_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2") if RAG_AVAILABLE else None
 vector_store = None
+BANCO_PREGUNTAS_CANDIDATOS = [
+    Path("./40-preguntas-etapa-2-IO.txt"),
+    Path("./40-preguntas-etapa-2-IO.md"),
+    Path("./documentos/40-preguntas-etapa-2-IO.txt"),
+    Path("./documentos/40-preguntas-etapa-2-IO.md"),
+    Path("./banco_preguntas_io.txt"),
+]
+BANCO_PREGUNTAS_MANIFEST = CHROMA_PATH / "banco_preguntas_manifest.json"
 
 def verify_and_init_vectordb() -> Optional[Any]:
     """Verifica integridad de ChromaDB y la inicializa"""
@@ -172,10 +181,163 @@ def init_vectordb_from_pdf() -> Optional[Any]:
         logger.error(f"❌ Error creando ChromaDB: {e}")
         return None
 
+
+def _resolver_banco_preguntas_path() -> Optional[Path]:
+    """Resuelve el archivo de banco en orden de prioridad."""
+    for candidato in BANCO_PREGUNTAS_CANDIDATOS:
+        if candidato.exists():
+            return candidato
+    return None
+
+
+def _parsear_preguntas_desde_banco(texto: str) -> List[Tuple[int, str]]:
+    """Extrae bloques por PREGUNTA N preservando opciones, respuesta y explicación."""
+    preguntas: List[Tuple[int, str]] = []
+    patron = re.compile(r"PREGUNTA\s+(\d+)\s*:\s*(.*?)(?=PREGUNTA\s+\d+\s*:|\Z)", re.IGNORECASE | re.DOTALL)
+    for match in patron.finditer(texto):
+        numero = int(match.group(1))
+        cuerpo = match.group(2).strip()
+        if not cuerpo:
+            continue
+        bloque = f"PREGUNTA {numero}:\n{cuerpo}"
+        preguntas.append((numero, bloque))
+    return preguntas
+
+
+def _leer_manifest_banco() -> Dict[str, Any]:
+    if not BANCO_PREGUNTAS_MANIFEST.exists():
+        return {}
+    try:
+        return json.loads(BANCO_PREGUNTAS_MANIFEST.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _guardar_manifest_banco(data: Dict[str, Any]) -> None:
+    try:
+        BANCO_PREGUNTAS_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+        BANCO_PREGUNTAS_MANIFEST.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as e:
+        logger.warning(f"⚠️ No se pudo guardar manifest del banco: {e}")
+
+
+def _eliminar_documentos_banco_previos() -> None:
+    """Limpia documentos previos del banco para evitar duplicados entre reinicios."""
+    if not vector_store:
+        return
+
+    filtros = [
+        {"source": "banco_preguntas_io"},
+        {"source": "40-preguntas-etapa-2-IO"},
+        {"collection_tag": "banco_preguntas_io"},
+    ]
+
+    for where in filtros:
+        try:
+            resultado = vector_store._collection.get(where=where, include=[])
+            ids = resultado.get("ids", []) if isinstance(resultado, dict) else []
+            if ids:
+                vector_store._collection.delete(ids=ids)
+        except Exception:
+            # Algunos backends pueden no soportar todos los filtros; seguimos con el resto.
+            continue
+
 # Inicializar o verificar ChromaDB
 vector_store = verify_and_init_vectordb()
 if not vector_store:
     vector_store = init_vectordb_from_pdf()
+
+def agregar_banco_preguntas_a_chroma() -> bool:
+    """
+    Carga el banco de preguntas y respuestas (40-preguntas-etapa-2-IO)
+    y lo agrega a la base de datos vectorial de ChromaDB.
+    """
+    global vector_store
+    
+    if not RAG_AVAILABLE or not vector_store:
+        logger.warning("⚠️ RAG no disponible, omitiendo banco de preguntas")
+        return False
+    
+    banco_path = _resolver_banco_preguntas_path()
+    if not banco_path or not banco_path.exists():
+        logger.warning(f"⚠️ Archivo de banco de preguntas no encontrado: {banco_path}")
+        return False
+    source_name = "40-preguntas-etapa-2-IO" if "40-preguntas" in banco_path.name.lower() else "banco_preguntas_io"
+    
+    try:
+        logger.info(f"📚 Cargando banco de preguntas y respuestas desde: {banco_path}")
+        texto = banco_path.read_text(encoding="utf-8", errors="ignore")
+        preguntas = _parsear_preguntas_desde_banco(texto)
+        contenido_hash = hashlib.sha256(texto.encode("utf-8")).hexdigest()
+
+        manifest = _leer_manifest_banco()
+        if (
+            manifest.get("content_sha256") == contenido_hash
+            and manifest.get("source_path") == str(banco_path)
+            and manifest.get("question_count") == len(preguntas)
+        ):
+            logger.info("✅ Banco ya integrado (sin cambios). No se agregan duplicados.")
+            return True
+        
+        from langchain_core.documents import Document
+        
+        documentos = []
+        doc_ids = []
+        for numero, contenido in preguntas:
+            if not contenido.strip():
+                continue
+            # Mantiene pregunta + opciones + respuesta + explicación para recuperar contexto completo.
+            doc = Document(
+                page_content=contenido,
+                metadata={
+                    "source": source_name,
+                    "pregunta_numero": numero,
+                    "tipo": "examen_io",
+                    "collection_tag": "banco_preguntas_io",
+                    "archivo_origen": str(banco_path),
+                },
+            )
+            documentos.append(doc)
+            doc_ids.append(f"banco-preguntas-{numero}-{contenido_hash[:12]}")
+        
+        if documentos:
+            _eliminar_documentos_banco_previos()
+            logger.info(f"🔄 Agregando {len(documentos)} preguntas a ChromaDB...")
+            try:
+                vector_store.add_documents(documentos, ids=doc_ids)
+            except TypeError:
+                vector_store.add_documents(documentos)
+
+            _guardar_manifest_banco(
+                {
+                    "source_path": str(banco_path),
+                    "content_sha256": contenido_hash,
+                    "question_count": len(documentos),
+                }
+            )
+
+            if len(documentos) < 40:
+                logger.warning(
+                    f"⚠️ Banco integrado con {len(documentos)} preguntas. "
+                    "Si esperabas 40, revisa el archivo fuente 40-preguntas-etapa-2-IO."
+                )
+
+            logger.info("✅ Banco de preguntas integrado exitosamente a ChromaDB")
+            return True
+        else:
+            logger.warning("⚠️ No se encontraron preguntas en el banco")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Error al agregar banco de preguntas: {e}")
+        return False
+
+# Agregar banco de preguntas a ChromaDB
+if vector_store:
+    agregar_banco_preguntas_a_chroma()
 
 retriever = vector_store.as_retriever(search_kwargs={"k": 6}) if vector_store else None
 
@@ -956,7 +1118,23 @@ def resolver_problema_io(pregunta_usuario: str) -> str:
 - Gestión de Proyectos (CPM/PERT, Ruta Crítica).
 - Teoría de Operaciones.
 
+ESTILO DE RESPUESTA - DEBES SEGUIR ESTE FORMATO:
+===============================================
+Tu respuesta DEBE ser DETALLADA, EDUCATIVA y ESTRUCTURADA. Sigue este patrón:
+
+1. **CLASIFICACIÓN**: Identifica el tipo de problema
+2. **OPCIONES** (si aplica): Presenta opciones A, B, C, D si es una pregunta de opción múltiple
+3. **RESPUESTA CORRECTA**: Indica cuál es la respuesta correcta
+4. **EXPLICACIÓN DETALLADA**: 
+   - Fundamentación teórica
+   - Fórmulas y definiciones clave
+   - Desarrollo paso a paso (Si es cálculo)
+   - Interpretación económica o práctica
+   - Ejemplos numéricos cuando sea relevante
+5. **CONCLUSIÓN**: Resumen del aprendizaje clave
+
 INSTRUCCIONES CRÍTICAS:
+=======================
 1. SIEMPRE analiza el problema matemáticamente.
 2. Identifica si es un problema de minimización o MAXIMIZACIÓN.
 3. SIEMPRE BUSCA TEORÍA primero usando la herramienta tool_buscar_teoria.
@@ -966,13 +1144,30 @@ INSTRUCCIONES CRÍTICAS:
 7. Para grafos/rutas: USA tool_ruta_mas_corta_dijkstra.
 8. NUNCA intentes resolver matemáticamente sin herramientas.
 9. Presenta siempre: FORMULACIÓN → RESOLUCIÓN → RESULTADO FINAL.
+10. SÉ EDUCATIVO: Cada respuesta debe enseñar, no solo dar una respuesta.
+
+FORMATO DE CÁLCULO MATEMÁTICO:
+===============================
+Cuando realices cálculos, muestra:
+- La fórmula (ej: Q = √(2DS / H))
+- Identificación de variables
+- Sustitución de valores
+- Operaciones paso a paso
+- Resultado final con interpretación
+
+EJEMPLOS NUMÉRICOS:
+===================
+Cuando sea posible, incluye ejemplos concretos que ilustren:
+- El concepto
+- Las relaciones entre variables
+- Las implicaciones prácticas
 
 Cuando recibas un problema:
 1. Clasifica el tipo (LP, Entera, Ruta, CPM, Teoría).
 2. Busca teoría relevante.
 3. Formula correctamente (especifica si es Max o Min).
 4. Invoca herramienta adecuada.
-5. Explica resultados claramente."""
+5. Explica resultados claramente siguiendo el formato anterior."""
         
         agent = create_react_agent(llm, tools, debug=False)
         

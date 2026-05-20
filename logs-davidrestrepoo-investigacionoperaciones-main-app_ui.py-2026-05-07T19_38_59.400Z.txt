@@ -1,0 +1,150 @@
+
+[     UTC     ] Logs for investigacionoperaciones-7mi6qjk9hz9xqhbnuwgm96.streamlit.app/
+────────────────────────────────────────────────────────────────────────────────────────
+[19:37:11] 🚀 Starting up repository: 'investigacionoperaciones', branch: 'main', main module: 'app_ui.py'
+[19:37:11] 🐙 Cloning repository...
+[19:37:12] 🐙 Cloning into '/mount/src/investigacionoperaciones'...
+
+[19:37:12] 🐙 Cloned repository!
+[19:37:12] 🐙 Pulling code changes from Github...
+[19:37:13] 📦 Processing dependencies...
+
+──────────────────────────────────────── uv ───────────────────────────────────────────
+
+Using uv pip install.
+Using Python 3.14.4 environment at /home/adminuser/venv
+  × No solution found when resolving dependencies:
+  ╰─▶ Because langchain==0.1.20 depends on langchain-core>=0.1.52,<0.2.0 and
+      langgraph==0.0.53 depends on langchain-core>=0.2,<0.3, we can conclude
+      that langchain==0.1.20 and langgraph==0.0.53 are incompatible.
+      And because you require langchain==0.1.20 and langgraph==0.0.53, we can
+      conclude that your requirements are unsatisfiable.
+Checking if Streamlit is installed
+Installing rich for an improved exception logging
+Using uv pip install.
+Using Python 3.14.4 environment at /home/adminuser/venv
+Resolved 4 packages in 128ms
+Prepared 4 packages in 174ms
+Installed 4 packages in 32ms
+ + markdown-it-py==4.2.0
+ + mdurl==0.1.2
+ + pygments==2.20.0
+ + rich==15.0.0
+
+────────────────────────────────────────────────────────────────────────────────────────
+
+
+──────────────────────────────────────── pip ───────────────────────────────────────────
+
+Using standard pip install.
+Collecting langchain==0.1.20 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 1))
+  Downloading langchain-0.1.20-py3-none-any.whl.metadata (13 kB)
+Collecting langchain-community==0.0.38 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 2))
+  Downloading langchain_community-0.0.38-py3-none-any.whl.metadata (8.7 kB)
+Collecting langchain-chroma==0.1.2 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 3))
+  Downloading langchain_chroma-0.1.2-py3-none-any.whl.metadata (1.3 kB)
+Collecting langchain-groq==0.1.2 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 4))
+  Downloading langchain_groq-0.1.2-py3-none-any.whl.metadata (2.8 kB)
+Collecting langchain-huggingface==0.0.3 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 5))
+  Downloading langchain_huggingface-0.0.3-py3-none-any.whl.metadata (1.2 kB)
+Collecting langgraph==0.0.53 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 6))
+  Downloading langgraph-0.0.53-py3-none-any.whl.metadata (23 kB)
+Collecting chromadb==0.4.24 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 7))
+  Downloading chromadb-0.4.24-py3-none-any.whl.metadata (7.3 kB)
+Collecting sentence-transformers==2.6.1 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 8))
+  Downloading sentence_transformers-2.6.1-py3-none-any.whl.metadata (11 kB)
+Collecting groq==0.4.2 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 9))
+  Downloading groq-0.4.2-py3-none-any.whl.metadata (12 kB)
+Collecting pypdf==3.17.1 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 10))
+  Downloading pypdf-3.17.1-py3-none-any.whl.metadata (7.5 kB)
+Collecting pulp==2.7.0 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 11))
+  Downloading PuLP-2.7.0-py3-none-any.whl.metadata (5.1 kB)
+Collecting scipy==1.11.4 (from -r /mount/src/investigacionoperaciones/requirements.txt (line 12))
+  Downloading scipy-1.11.4.tar.gz (56.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.3/56.3 MB 157.0 MB/s eta 0:00:00[2026-05-07 19:37:17.495050] 
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Preparing metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [16 lines of output]
+      + meson setup /tmp/pip-install-uja4upp4/scipy_54b4bbb84d34422badcbe57873e163f6 /tmp/pip-install-uja4upp4/scipy_54b4bbb84d34422badcbe57873e163f6/.mesonpy-a9rgt4dd -Dbuildtype=release -Db_ndebug=if-release -Db_vscrt=md --native-file=/tmp/pip-install-uja4upp4/scipy_54b4bbb84d34422badcbe57873e163f6/.mesonpy-a9rgt4dd/meson-python-native-file.ini
+      The Meson build system
+      Version: 1.11.1
+      Source dir: /tmp/pip-install-uja4upp4/scipy_54b4bbb84d34422badcbe57873e163f6
+      Build dir: /tmp/pip-install-uja4upp4/scipy_54b4bbb84d34422badcbe57873e163f6/.mesonpy-a9rgt4dd
+      Build type: native build
+      Project name: SciPy
+      Project version: 1.11.4
+      C compiler for the host machine: cc (gcc 14.2.0 "cc (Debian 14.2.0-19) 14.2.0")
+      C linker for the host machine: cc ld.bfd 2.44
+      C++ compiler for the host machine: c++ (gcc 14.2.0 "c++ (Debian 14.2.0-19) 14.2.0")
+      C++ linker for the host machine: c++ ld.bfd 2.44
+      
+      ../meson.build:1:0: ERROR: Compiler cython cannot compile programs.
+      
+      A full log can be found at /tmp/pip-install-uja4upp4/scipy_54b4bbb84d34422badcbe57873e163f6/.mesonpy-a9rgt4dd/meson-logs/meson-log.txt
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+
+[notice] A new release of pip is available: 24.0 -> 26.1.1
+[notice] To update, run: pip install --upgrade pip
+Checking if Streamlit is installed
+Installing rich for an improved exception logging
+Using standard pip install.
+Collecting rich>=10.14.0
+  Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+Collecting markdown-it-py>=2.2.0 (from rich>=10.14.0)
+  Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich>=10.14.0)
+  Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=10.14.0)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 310.7/310.7 kB 18.8 MB/s eta 0:00:00[2026-05-07 19:37:54.533302] 
+Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 91.7/91.7 kB 153.5 MB/s eta 0:00:00[2026-05-07 19:37:54.553720] 
+Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 32.5 MB/s eta 0:00:00[2026-05-07 19:37:54.614063] 
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Installing collected packages: pygments, mdurl, markdown-it-py, rich
+  Attempting uninstall: pygments
+    Found existing installation: Pygments 2.20.0
+    Uninstalling Pygments-2.20.0:
+      Successfully uninstalled Pygments-2.20.0
+  Attempting uninstall: mdurl
+    Found existing installation: mdurl 0.1.2
+    Uninstalling mdurl-0.1.2:
+      Successfully uninstalled mdurl-0.1.2
+  Attempting uninstall: markdown-it-py
+    Found existing installation: markdown-it-py 4.2.0
+    Uninstalling markdown-it-py-4.2.0:
+      Successfully uninstalled markdown-it-py-4.2.0
+  Attempting uninstall: rich
+    Found existing installation: rich 15.0.0
+    Uninstalling rich-15.0.0:
+      Successfully uninstalled rich-15.0.0
+Successfully installed markdown-it-py-4.2.0 mdurl-0.1.2 pygments-2.20.0 rich-15.0.0
+
+[notice] A new release of pip is available: 24.0 -> 26.1.1
+[notice] To update, run: pip install --upgrade pip
+
+────────────────────────────────────────────────────────────────────────────────────────
+
+[19:37:58] ❗️ installer returned a non-zero exit code
+[19:37:58] ❗️ Error during processing dependencies! Please fix the error and push an update, or try restarting the app.
